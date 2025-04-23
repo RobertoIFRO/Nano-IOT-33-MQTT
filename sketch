@@ -6,17 +6,22 @@
 */
 
 
-
-
 #include <WiFiNINA.h>
-#include <PubSubClient.h>
+#include <PubSubClient.h> 
 
+//*******************************sensor temp****************
+#include <DHT.h>
+#include <DHT_U.h>
+#define DHTTYPE DHT11 // DHT 11
+#define DHTPIN 2 // pino que estamos conectado
+DHT dht(DHTPIN, DHTTYPE);
+//**********************************************************
 // WiFi credentials
 const char* ssid = "Casa";
 const char* password = "4567asdf";
 
 // MQTT Broker (replace with your broker if using a local one)
-const char* mqtt_server = "broker.hivemq.com"; // Public broker for testing
+const char* mqtt_server = "broker.emqx.io"; // Public broker for testing
 const int mqtt_port = 1883;
 const char* mqtt_topic = "roberto.simplicio@ifro.edu.br/testtopic1";
 
@@ -51,6 +56,12 @@ void reconnectMQTT() {
 
 void setup() {
   Serial.begin(9600);
+  //************************dht**********************
+  Serial.println("DHTxx test!");
+  dht.begin();
+  delay(1500); 
+  pinMode(DHTPIN,INPUT);
+  //**************************************************
   setupWiFi();
 
   client.setServer(mqtt_server, mqtt_port);
@@ -84,3 +95,24 @@ void loop() {
     Serial.println(message);
     client.publish(mqtt_topic, message.c_str());
   }
+   
+    //*********************************************dht**********************
+  float h = dht.readHumidity();
+  float t = dht.readTemperature();
+
+    Serial.print("Umidade: "); Serial.print(h);Serial.print(" %t ");
+    Serial.print("Temperatura: "); Serial.print(t); Serial.println(" *C");
+
+    String message1 = String("Umidade ") + String(h) + String("%");
+    Serial.print("Publishing message: ");
+    Serial.println(message1);
+    client.publish(mqtt_topic, message1.c_str());
+
+    String message2 = String("Temp ") + String(t) + String("ºC");
+    Serial.print("Publishing message: ");
+    Serial.println(message2);
+    client.publish(mqtt_topic, message2.c_str());
+  
+  //**********************************************************************************
+  delay(5000);
+}
